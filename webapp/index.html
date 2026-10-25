@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FitPulse TMA — Фитнес-планер и программы тренировок</title>
+  <!-- Official Telegram Mini App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-24">
+
+  <!-- Top Telegram Mini App Bar -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <div class="max-w-3xl mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <svg class="w-5 h-5 text-slate-950 font-bold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="font-extrabold text-base tracking-tight text-white">FitPulse</h1>
+            <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Telegram Mini App</span>
+          </div>
+          <p class="text-xs text-slate-400" id="headerSubtitle">Сплит по дням (Спина/Бицепс · Ноги/Плечи · Грудь/Трицепс) · 8 недель</p>
+        </div>
+      </div>
+
+      <!-- Quick Rest Timer Pill -->
+      <div class="flex items-center gap-2">
+        <button id="restTimerBtn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+          </svg>
+          <span id="restTimerLabel">Отдых 01:30</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-3xl w-full mx-auto px-4 pt-4 space-y-5 flex-1">
+
+    <!-- Personalization Controls Card (Gender, Level, 8-Week Periodization, Muscle Split) -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+        <div>
+          <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
+            <span>Параметры программы</span>
+            <span id="dbStatusBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Фото-база: Free Exercise DB</span>
+          </h2>
+          <p class="text-xs text-slate-400">Циклическое разделение мышечных групп по дням (6 упражнений + заминка)</p>
+        </div>
+        <button id="resetProgressBtn" type="button" class="text-xs text-slate-400 hover:text-rose-400 transition underline">
+          Сбросить отметки
+        </button>
+      </div>
+
+      <!-- Row 1: Gender & Difficulty Level -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Gender Selector -->
+        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Пол и биомеханические акценты</label>
+          <div class="grid grid-cols-2 gap-1.5" id="genderSelector">
+            <button type="button" data-gender="male" class="gender-btn py-2 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow">
+              <span>Мужчина</span>
+            </button>
+            <button type="button" data-gender="female" class="gender-btn py-2 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+              <span>Девушка</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Difficulty Selector -->
+        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Уровень подготовки</label>
+          <div class="grid grid-cols-3 gap-1" id="levelSelector">
+            <button type="button" data-level="beginner" class="level-btn py-2 px-2 rounded-lg text-xs font-semibold transition bg-emerald-500 text-slate-950 shadow">
+              Новичок
+            </button>
+            <button type="button" data-level="intermediate" class="level-btn py-2 px-2 rounded-lg text-xs font-semibold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+              Средний
+            </button>
+            <button type="button" data-level="pro" class="level-btn py-2 px-2 rounded-lg text-xs font-semibold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+              Атлет PRO
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: 8-Week Mesocycle Periodization (Block 1 + Deload + Block 2) -->
+      <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+        <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Мезоцикл 8 недель (умная периодизация с разгрузкой)</span>
+          <span id="progressionBadge" class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+            Неделя 1: Адаптация и техника
+          </span>
+        </div>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-1.5" id="weekSelector">
+          <button type="button" data-week="1" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-indigo-500 text-white shadow">Нед 1</button>
+          <button type="button" data-week="2" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">Нед 2</button>
+          <button type="button" data-week="3" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">Нед 3</button>
+          <button type="button" data-week="4" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-teal-300 hover:bg-slate-700" title="Разгрузочная неделя (Deload)">Нед 4 🌿</button>
+          <button type="button" data-week="5" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">Нед 5</button>
+          <button type="button" data-week="6" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">Нед 6</button>
+          <button type="button" data-week="7" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">Нед 7</button>
+          <button type="button" data-week="8" class="week-btn py-2 rounded-lg text-[11px] font-bold transition bg-slate-800 text-amber-300 hover:bg-slate-700">Нед 8 🔥</button>
+        </div>
+      </div>
+
+      <!-- Row 3: Muscle Group / Split Complex Selector -->
+      <div>
+        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Выбор программы / комплекса по дням</label>
+        <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1" id="focusSelector">
+          <button type="button" data-focus="fullbody" class="focus-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition bg-emerald-500 text-slate-950 shadow">
+            Фуллбади Сплит (Всё тело по дням)
+          </button>
+          <button type="button" data-focus="upper" class="focus-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+            Верх тела (Акцент)
+          </button>
+          <button type="button" data-focus="lower" class="focus-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+            Низ (Ноги и Ягодицы)
+          </button>
+          <button type="button" data-focus="push" class="focus-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+            Грудь + Плечи + Трицепс
+          </button>
+          <button type="button" data-focus="pull" class="focus-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+            Спина + Бицепс
+          </button>
+          <button type="button" data-focus="core" class="focus-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+            Рельеф + Пресс и Кардио
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Formula Summary Banner -->
+      <div id="formulaSummary" class="bg-gradient-to-r from-emerald-950/70 via-slate-900 to-indigo-950/60 border border-emerald-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="space-y-0.5">
+          <div class="font-bold text-emerald-300" id="formulaTitle">Формула нагрузки: Мужчина · Новичок · Неделя 1</div>
+          <div class="text-slate-300" id="formulaDetails">3 подхода × 10–12 повторений · Отдых 90 сек · RIR 2–3 (запас сил)</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-[10px] uppercase text-slate-400">Выполнено за день</div>
+            <div class="text-sm font-extrabold text-white" id="dayCompletionStat">0 / 0 сетов</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 1: WORKOUT PLAN & ACTIVE WORKOUT -->
+    <div id="view-workout" class="space-y-4">
+      <!-- Weekly Schedule Strip (Mon - Sun) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">График тренировок по дням недели</span>
+          <span id="selectedDayLabel" class="text-xs font-semibold text-emerald-400">Понедельник — Тренировочный день</span>
+        </div>
+        <div class="grid grid-cols-7 gap-1.5" id="dayStrip">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Helper Banner about Cyclic Muscle Group Split (as in FitnessOnline) -->
+      <div class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-200">
+        <div class="flex items-center gap-2">
+          <span class="text-base">💪</span>
+          <span>Логика <strong>FitnessOnline</strong>: каждая тренировка бьет прицельно по 2 группам мышц (<strong>ПН: Спина + Бицепс</strong> → <strong>СР: Ноги + Плечи</strong> → <strong>ПТ: Грудь + Трицепс</strong> → <strong>СБ: Ягодицы + Кор</strong>) + <strong>🧘 Растяжка в конце</strong>.</span>
+        </div>
+      </div>
+
+      <!-- Exercises List for Selected Day -->
+      <div id="workoutDayContainer" class="space-y-3">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Post-Workout Stretching & Cooldown Block (as in FitnessOnline) -->
+      <div id="stretchingBlockContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- VIEW 2: WEEKLY SCHEDULE OVERVIEW & PROGRESSION MATRIX -->
+    <div id="view-schedule" class="hidden space-y-4">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <h3 class="text-base font-bold text-white">Научная периодизация на 8 недель (с разгрузкой Deload)</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Линейно повышать веса и повторения каждую неделю без перерыва нельзя — на 4-й неделе накапливается утомление ЦНС и связок. Поэтому на <strong>4-й неделе</strong> встроен <strong>Deload (разгрузка)</strong>, после которого во втором блоке (Недели 5–8) вы легко берете новые веса.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="py-2.5 px-2.5">Фаза мезоцикла</th>
+                <th class="py-2.5 px-2.5">Новичок (база 3×10)</th>
+                <th class="py-2.5 px-2.5">Средний (база 3–4×12)</th>
+                <th class="py-2.5 px-2.5">Атлет PRO (база 4×12–15)</th>
+                <th class="py-2.5 px-2.5">Цель недели</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/70 text-slate-200">
+              <tr>
+                <td class="py-2 px-2.5 font-semibold text-emerald-400">Недели 1–2 (Блок 1)</td>
+                <td class="py-2 px-2.5">3 сета · +0..2 повт.</td>
+                <td class="py-2 px-2.5">3–4 сета · +5% вес</td>
+                <td class="py-2 px-2.5">4 сета · +5% вес</td>
+                <td class="py-2 px-2.5 text-slate-400">Втягивание и рост объема (RIR 2–3)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-2.5 font-semibold text-indigo-400">Неделя 3 (Интенсив)</td>
+                <td class="py-2 px-2.5">4 сета · +5% вес</td>
+                <td class="py-2 px-2.5">4 сета · +8% вес</td>
+                <td class="py-2 px-2.5">5 сетов · +8% вес</td>
+                <td class="py-2 px-2.5 text-slate-400">Локальный пик 1-го блока (RIR 1–2)</td>
+              </tr>
+              <tr class="bg-teal-950/30">
+                <td class="py-2 px-2.5 font-bold text-teal-300">Неделя 4 🌿 (Deload)</td>
+                <td class="py-2 px-2.5">2 сета · −10% вес</td>
+                <td class="py-2 px-2.5">2–3 сета · −10% вес</td>
+                <td class="py-2 px-2.5">3 сета · −10% вес</td>
+                <td class="py-2 px-2.5 text-teal-300">Восстановление связок и ЦНС (RIR 3–4)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-2.5 font-semibold text-purple-400">Недели 5–7 (Блок 2)</td>
+                <td class="py-2 px-2.5">3–4 сета · +8..12% вес</td>
+                <td class="py-2 px-2.5">4 сета · +10..14% вес</td>
+                <td class="py-2 px-2.5">5 сетов · +12..15% вес</td>
+                <td class="py-2 px-2.5 text-slate-400">Силовая прогрессия и гипертрофия</td>
+              </tr>
+              <tr class="bg-amber-950/20">
+                <td class="py-2 px-2.5 font-bold text-amber-400">Неделя 8 🔥 (Пик)</td>
+                <td class="py-2 px-2.5">4 сета · +15% вес</td>
+                <td class="py-2 px-2.5">4–5 сетов · +16% вес</td>
+                <td class="py-2 px-2.5">5 сетов · +18% вес</td>
+                <td class="py-2 px-2.5 text-amber-300">Финальный рекорд цикла (RIR 0–1)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Full 7-Day Plan Cards -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white">Полное расписание на неделю (разделение мышц по дням)</h3>
+          <span class="text-xs text-slate-400" id="scheduleSubheader">6 упражнений + заминка в каждый тренировочный день</span>
+        </div>
+        <div id="fullWeekGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: EXERCISE ENCYCLOPEDIA & MUSCLE FILTER -->
+    <div id="view-exercises" class="hidden space-y-4">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-bold text-white">Фото-энциклопедия упражнений и аналогов</h3>
+            <p class="text-xs text-slate-400">Пошаговые фото-кадры (Старт ↔ Пик усилия) из открытой базы Free Exercise DB</p>
+          </div>
+          <select id="CatalogMuscleFilter" class="bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500">
+            <option value="all">Все группы мышц</option>
+            <option value="Грудь">Грудь</option>
+            <option value="Спина">Спина</option>
+            <option value="Ноги и Ягодицы">Ноги и Ягодицы</option>
+            <option value="Плечи">Плечи</option>
+            <option value="Руки">Руки (Бицепс / Трицепс)</option>
+            <option value="Пресс и Кор">Пресс и Кор</option>
+          </select>
+        </div>
+        <div id="exerciseCatalogList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: PROGRESS & ANALYTICS -->
+    <div id="view-analytics" class="hidden space-y-4">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+          <div class="text-[11px] text-slate-400">Завершено сетов</div>
+          <div class="text-xl font-extrabold text-emerald-400 mt-1" id="statCompletedSets">0</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+          <div class="text-[11px] text-slate-400">Общий тоннаж</div>
+          <div class="text-xl font-extrabold text-indigo-400 mt-1" id="statTotalVolume">0 кг</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+          <div class="text-[11px] text-slate-400">Сожжено ккал</div>
+          <div class="text-xl font-extrabold text-amber-400 mt-1" id="statCalories">0 ккал</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-white">Волновая прогрессия тоннажа по 8 неделям мезоцикла</h3>
+            <p class="text-xs text-slate-400">Обратите внимание на Неделю 4 (Deload 🌿) перед новым скачком роста в Неделях 5–8</p>
+          </div>
+        </div>
+        <div class="relative h-64 w-full bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 flex items-end justify-around gap-2" id="volumeBarsContainer">
+          <!-- Custom responsive 8-week bar chart rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Exercise Photo & Technique Modal -->
+  <div id="exerciseModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl my-auto">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="modalMuscleTag" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Группа мышц</span>
+            <span id="modalEquipBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">Инвентарь</span>
+          </div>
+          <h3 id="modalExerciseTitle" class="text-base sm:text-lg font-extrabold text-white mt-1.5">Название упражнения</h3>
+        </div>
+        <button id="closeModalBtn" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800">
+          ✕
+        </button>
+      </div>
+
+      <!-- Interactive Real Photo Flipbook / Vector Box -->
+      <div class="relative rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 bg-slate-900/90 border-b border-slate-800/80 text-[11px]">
+          <div class="flex items-center gap-1.5">
+            <button id="modePhotoBtn" type="button" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-bold transition">
+              📸 Живое фото (Кадр 1↔2)
+            </button>
+            <button id="modeVectorBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold transition">
+              📐 Схема + Анатомия
+            </button>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span id="frameIndicatorBadge" class="px-2 py-0.5 rounded bg-slate-800 text-emerald-400 font-bold">Фаза 1: Старт</span>
+            <button id="toggleAnimPlayBtn" type="button" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold">
+              Пауза
+            </button>
+          </div>
+        </div>
+
+        <div id="modalVideoStage" class="h-60 flex items-center justify-center p-3 bg-gradient-to-b from-slate-950 to-slate-900 relative overflow-hidden">
+          <!-- Real Photo Flipbook / Vector injected by JS -->
+        </div>
+
+        <!-- Custom GIF / MP4 URL Uploader Bar -->
+        <div class="px-3.5 py-2 bg-slate-900/70 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <span id="modalTempoText" class="text-slate-400">Темп: 2 сек негативная фаза · 1 сек выжим</span>
+          <button id="openCustomMediaInputBtn" type="button" class="text-indigo-400 hover:text-indigo-300 font-semibold underline">
+            + Свой URL видео (.mp4 / .gif)
+          </button>
+        </div>
+
+        <div id="customMediaBox" class="hidden px-3.5 py-2.5 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+          <input id="customMediaUrlInput" type="url" placeholder="Вставьте ссылку на .mp4 или .gif" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+          <button id="applyCustomMediaBtn" type="button" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-xs font-bold hover:bg-emerald-400">
+            Применить
+          </button>
+        </div>
+      </div>
+
+      <!-- Step-by-step instructions -->
+      <div class="space-y-1.5">
+        <div class="text-xs font-bold text-slate-300">Пошаговая техника выполнения:</div>
+        <div id="modalExerciseSteps" class="text-xs text-slate-300 space-y-2 leading-relaxed bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+        </div>
+      </div>
+
+      <!-- Quick Swap Section right inside Technique Modal -->
+      <div id="modalAlternativesBox" class="space-y-2 pt-1 border-t border-slate-800">
+        <div class="text-xs font-bold text-indigo-300">Доступные аналоги (если тренажер занят):</div>
+        <div id="modalAlternativesList" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+        <span id="modalEquipment">Инвентарь: Зал / Гантели</span>
+        <button id="modalCloseAction" type="button" class="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 transition">
+          Понятно
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise Substitution (Swap) Modal (like FitnessOnline) -->
+  <div id="swapModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl my-auto">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Умная замена упражнения</span>
+          <h3 class="text-base sm:text-lg font-extrabold text-white mt-1">Чем заменить упражнение?</h3>
+          <p id="swapCurrentExSub" class="text-xs text-slate-400 mt-0.5">Текущее: —</p>
+        </div>
+        <button id="closeSwapModalBtn" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800">
+          ✕
+        </button>
+      </div>
+
+      <!-- Equipment Filter inside Swap Modal -->
+      <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1" id="swapEquipFilter">
+        <button type="button" data-eq="all" class="swap-eq-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500 text-white">Все варианты</button>
+        <button type="button" data-eq="free" class="swap-eq-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">Гантели / Штанга</button>
+        <button type="button" data-eq="machine" class="swap-eq-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">Тренажер / Блок</button>
+        <button type="button" data-eq="bodyweight" class="swap-eq-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">Без тренажеров (Свой вес)</button>
+      </div>
+
+      <!-- List of Alternative Variants -->
+      <div id="swapOptionsContainer" class="space-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+        <button id="cancelSwapBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition">
+          Отмена
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar (Telegram Mini App Style) -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-2">
+    <div class="max-w-3xl mx-auto grid grid-cols-4 gap-1">
+      <button type="button" data-tab="workout" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-emerald-400 bg-emerald-500/10 font-semibold text-xs transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Тренировка</span>
+      </button>
+      <button type="button" data-tab="schedule" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 hover:text-slate-200 font-semibold text-xs transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>График</span>
+      </button>
+      <button type="button" data-tab="exercises" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 hover:text-slate-200 font-semibold text-xs transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <span>Упражнения</span>
+      </button>
+      <button type="button" data-tab="analytics" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 hover:text-slate-200 font-semibold text-xs transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>Прогресс</span>
+      </button>
+    </div>
+  </nav>
+
+  
+  <script src="js/data.js"></script>
+  <script src="js/telegram.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

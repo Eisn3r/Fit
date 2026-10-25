@@ -1,0 +1,57 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0b1120;
+  color: #f8fafc;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+.timer-active {
+  animation: pulse-ring 2s infinite ease-in-out;
+}
+@keyframes anim-squat-body {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(18px); }
+}
+@keyframes anim-push-bar {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+@keyframes anim-pull-bar {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(20px); }
+}
+@keyframes anim-hip-bridge {
+  0%, 100% { transform: translateY(8px); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes anim-curl-arm {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-55deg); }
+}
+@keyframes anim-pulse-glow {
+  0%, 100% { opacity: 0.35; r: 8px; }
+  50% { opacity: 0.9; r: 12px; }
+}
+.svg-squat { animation: anim-squat-body 2.4s infinite ease-in-out; }
+.svg-push { animation: anim-push-bar 2.2s infinite ease-in-out; }
+.svg-pull { animation: anim-pull-bar 2.4s infinite ease-in-out; }
+.svg-bridge { animation: anim-hip-bridge 2.3s infinite ease-in-out; }
+.svg-curl { transform-origin: 60px 58px; animation: anim-curl-arm 2.0s infinite ease-in-out; }
+.svg-paused * { animation-play-state: paused !important; }
+.muscle-glow { animation: anim-pulse-glow 1.8s infinite ease-in-out; }
